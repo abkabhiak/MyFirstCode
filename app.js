@@ -1,57 +1,33 @@
 
 //using express module
 var express = require('express');
+var mongoose = require('mongoose');
 // creating express object
 var app = express();
 
 app.use(express.static(__dirname + '/public'));
 var bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({ extended: false }));
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
+
+// parse application/json
 app.use(bodyParser.json())
-
+///////File Uploading////
+var Busboy = require('busboy');
+var busboy = require('connect-busboy'); //middleware for form/file upload
 var http = require('http'),
+    inspect = require('util').inspect;
     path = require('path'),
-    os = require('os'),
-    fs = require('fs');
-
-var busboy = require('connect-busboy');
+    os = require('os');
+var fs = require('fs-extra'); //File System - for file manipulation
 app.use(busboy());
+///////////////////////////// External File DB //////////////
 
+
+
+var hrusers=require('./Serverjs/Datajs/DBConnect.js');
+var hr1= new hrusers();
 ///////////////////////////////////////// Mongoose items //////////////////////////////////////////////////////
-var mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost:27017/MEANH_01');
-/*
-var kittySchema = mongoose.Schema({
-    name: String
-});
-// NOTE: methods must be added to the schema before compiling it with mongoose.model()
-kittySchema.methods.speak = function () {
-  var greeting = this.name
-    ? "Meow name is " + this.name
-    : "I don't have a name";
-  console.log(greeting);
-}
-*/
-
-//var Kitten = mongoose.model('Kitten', kittySchema);
-
-
-//var silence = new Kitten({ name: 'Silence' });
-//console.log(silence.name); // 'Silence'
-
-//var fluffy = new Kitten({ name: 'fluffy' });
-//fluffy.speak(); // "Meow name is fluffy"
-
-/*
-fluffy.save(function (err, fluffy) {
-  if (err) return console.error(err);
-  fluffy.speak();
-});
-*/
-//Kitten.find(function (err, kittens) {
-//  if (err) return console.error(err);
-//  console.log(kittens);
-//})
 
 mongoose.connection.on('error',function (err) {
  console.log('Mongoose connection error: ' + err);
@@ -63,35 +39,11 @@ process.on('SIGINT', function() {
  process.exit(0);
  });
 });
-///////////////////////////////////////// Mongoose Form items //////////////////////////////////////////////////////
 
-var hrUserschema = mongoose.Schema({
-    firstname: String,
-    lastname: String,
-    phone: Number,
-    pwd:String,
-    email: String
-//    img: { data: Buffer, contentType: String }
-});
-
-var hrusers = mongoose.model('hrUsers', hrUserschema);
-
-//var hr1= new hrusers({firstname:"Abhishek",lastname:"Kumar",phone:8881212,pwd:"12345",email:"abk@abk.com"});
-//console.log(hr1.firstname);
-
-//hr1.save(function (err, hr1) {
-//  if (err) return console.error(err);
-//});
+var fortune = require('./Serverjs/fortune.js');
 
 
-
-/*
-///Using Custome Modules
-*/
-var fortune = require('./libj/fortune.js');
-
-
-// set up handlebars view engine
+// ////////////////////////set up handlebars view engine
 var handlebars = require('express3-handlebars')
 .create({ defaultLayout:'main',
 helpers: {
@@ -105,7 +57,7 @@ return null;
 app.engine('handlebars', handlebars.engine);
 app.set('view engine', 'handlebars');
 
-// Setting Port of HTTP Host
+// ////////////////// Setting Port of HTTP Host
 app.set('port', process.env.PORT || 3000);
 
 
@@ -145,49 +97,147 @@ res.send(s);
 /// Form Post method handling try 1
 app.get('/thank_you', function(req, res){
 res.render('thank_you');
-//res.sendFile(path.resolve('./TempFiles/'+ imgfilename));
+//res.sendFile(path.resolve('./TempFiles/'+imgfilename));
 });
 
 app.get('/image.png', function (req, res) {
-    res.sendfile(path.resolve('./TempFiles/'+ imgfilename));
+    res.sendFile(path.resolve('./TempFiles/'+imgfilename));
+
 });
 
 
-
-
+var ffname;
+var llname;
+var pnumber;
+var emid;
+var pwd;
+var newpath;
 var imgfilename;
 app.post('/process', function(req, res){
-console.log('Name (from visible form field): ' + req.body.first_name+ req.body.last_name);
-console.log('Phone (from visible form field): ' + req.body.phone_number);
-console.log('Email (from visible form field): ' + req.body.email);
-console.log(req.ip);
-var fstream;
-req.pipe(req.busboy);
-req.busboy.on('file', function (fieldname, file, filename) {
-console.log("Uploading: " + filename);
-//Path where image will be uploaded
-fstream = fs.createWriteStream(__dirname + '/TempFiles/' + filename);
+/////// Busboy try
+if (req.method === 'POST') {
+    var busboy = new Busboy({ headers: req.headers });
+    busboy.on('file', function(fieldname, file, filename, encoding, mimetype) {
+      console.log('File [' + fieldname + ']: filename: ' + filename + ', encoding: ' + encoding + ', mimetype: ' + mimetype);
 
-imgfilename=filename
-console.log("File name is : "+imgfilename);
-file.pipe(fstream);
-fstream.on('close', function () {
-console.log("Upload Finished of " + filename);
-});
+          var fstream;
+          console.log("Uploading: " + filename);
+           //Path where image will be uploaded
+           newpath=__dirname + '/TempFiles/' + filename;
+           fstream = fs.createWriteStream(__dirname + '/TempFiles/' + filename);
+           console.log("This the newpath value "+newpath);
+           imgfilename=filename;
+           file.pipe(fstream);
+           fstream.on('close', function () {
+           console.log("Upload Finished of " + filename);
+           });
+
+      file.on('data', function(data) {
+        console.log('File [' + fieldname + '] got ' + data.length + ' bytes');
+
+      });
+      file.on('end', function() {
+        console.log('File [' + fieldname + '] Finished');
+      });
+    });
+    busboy.on('field', function(key, value, fieldnameTruncated, valTruncated, encoding, mimetype) {
+      console.log('Key [' + key + ']: value: ' + value);
+        switch (key) {
+          case 'first_name':
+            ffname=value;
+            break;
+          case  'last_name':
+            llname=value;
+            break;
+          case  'phone_number':
+            pnumber=value;
+              break;
+          case  'password':
+            pwd=value;
+              break;
+          case  'email':
+            emid=value;
+              break;
+          default:
+            Console.log(key);
+
+        }
+    });
+    busboy.on('finish', function() {
+      console.log('Done parsing form!');
+      console.log('Name (from visible form field): ' + ffname + llname);
+      console.log('Phone (from visible form field): ' + pnumber);
+      console.log('Email (from visible form field): ' + emid);
+      console.log(req.ip);
+      hr1.firstname=ffname;
+      hr1.lastname=llname;
+      hr1.phone=pnumber;
+      hr1.pwd=pwd;
+      hr1.email=emid;
+      hr1.img.data=newpath;
+      hr1.img.contentType='image/png';
+      hr1.imgname=imgfilename
+      console.log(hr1.firstname);
+        hr1.save(function (err, hr1) {
+        if (err) return console.error(err);
+        });
+        var myimgpath;
+        console.log('File path '+ hr1.img.data);
+        myimgpath=(hr1.img.data).toString();
+        console.log('File real path '+ myimgpath);
+      res.redirect(303, '/thank_you');
+    });
+    req.pipe(busboy);
+  }
+
+  //////////////////
 });
 
-var ffname=req.body.first_name;
-var llname=req.body.last_name;
-var pnumber=req.body.phone_number;
-var emid=req.body.email;
-var pwd=req.body.password;
-var hr2= new hrusers({firstname:ffname,lastname:llname,phone:pnumber,pwd:pwd,email:emid});
-console.log(hr2.firstname);
-  hr2.save(function (err, hr2) {
-  if (err) return console.error(err);
+app.get('/login', function(req, res){
+res.render('login');
+//res.sendFile(path.resolve('./TempFiles/'+imgfilename));
+});
+
+app.post('/loginuser',function(req,res){
+  var busboy = new Busboy({ headers: req.headers });
+  busboy.on('field', function(key, value, fieldnameTruncated, valTruncated, encoding, mimetype) {
+    console.log('Key [' + key + ']: value: ' + value);
+      switch (key) {
+        case 'email':
+          emid=value;
+          break;
+        case  'password':
+          pwd=value;
+          break;
+        default:
+          Console.log(key);
+
+      }
   });
-res.redirect(303, '/thank_you');
-});
+  busboy.on('finish', function() {
+    console.log('Done parsing form!');
+    console.log('Email (from visible form field): ' + emid);
+    console.log('Password (from the visible filed): '+pwd);
+
+    console.log(req.ip);
+    hrusers.findOne({ 'email': emid}, function (err, doc){
+      if(err) {
+        console.log('Error occured' +err);
+    }
+      if(doc){
+        if(doc.pwd==pwd){
+          imgfilename=doc.imgname;
+          res.redirect(303, '/thank_you');
+        }else {
+          imgfilename="";
+          res.render('404');
+        }
+      }
+      });
+  });
+  req.pipe(busboy);
+  });
+
 
 // 404 catch-all handler (middleware)
 app.use(function(req, res, next){

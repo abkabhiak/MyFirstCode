@@ -1,0 +1,31 @@
+{
+  "name": "MyFirstCode",
+  "description": "This is first Try project",
+  "dependencies": {
+    "get-size": "~1.2.2",
+    "eventEmitter": "~4.2.11",
+    "polymer": "Polymer/polymer#^1.2.0",
+    "paper-button": "PolymerElements/paper-button#~1.0.11"
+  },
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "private": true,
+  "homepage": "https://github.com/abkabhiak/MyFirstCode",
+  "authors": [
+    "abkabhi"
+  ],
+  "main": "app.js",
+  "moduleType": [
+    "amd",
+    "es6",
+    "globals",
+    "node",
+    "yui"
+  ]
+}
