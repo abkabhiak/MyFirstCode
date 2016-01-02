@@ -5,7 +5,7 @@
     "get-size": "~1.2.2",
     "eventEmitter": "~4.2.11",
     "polymer": "Polymer/polymer#^1.2.0",
-    "paper-button": "PolymerElements/paper-button#~1.0.11"
+    "paper-button": "PolymerElements/paper-button#^1.0.0"
   },
   "license": "MIT",
   "ignore": [
