@@ -1,6 +1,6 @@
 var express = require('express')
   , router = express.Router();
-
+var fortune = require(__dirname+'../../fortune.js');
   // to open the page as per the url path
   router.get('/', function(req, res) {
   res.render('home');
